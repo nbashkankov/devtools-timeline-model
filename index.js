@@ -9,7 +9,7 @@ if (typeof __dirname === 'undefined') {
 }
 /* eslint-enable no-native-reassign */
 
-class ModelAPI {
+class TracingModelAPI {
 
   constructor(events) {
 
@@ -25,7 +25,7 @@ class ModelAPI {
     // We evaluate the `vm.Script` in the new context
     script.runInContext(ctx);
     // We pull the local `instance` variable out, to use as our proxy object
-    this.sandbox = ctx.sandboxedModel;
+    this.sandbox = ctx.sandboxedTracingModel;
     this.sandbox.init(events);
 
     return this;
@@ -73,4 +73,30 @@ class ModelAPI {
   }
 }
 
-module.exports = ModelAPI;
+class CpuProfileModelAPI {
+  constructor(events) {
+
+    // Everything happens in a sandboxed vm context, to keep globals and natives separate.
+    // First, sandboxed contexts don't have any globals from node, so we whitelist a few we'll provide for it.
+    var glob = {require: require, global: global, console: console, __dirname: __dirname};
+    // We read in our script to run, and create a vm.Script object
+    /* eslint-disable no-path-concat */
+    var script = new vm.Script(fs.readFileSync(__dirname + '/lib/timeline-model.js', 'utf8'));
+    /* eslint-enable no-path-concat */
+    // We create a new V8 context with our globals
+    var ctx = vm.createContext(glob);
+    // We evaluate the `vm.Script` in the new context
+    script.runInContext(ctx);
+    // We pull the local `instance` variable out, to use as our proxy object
+    this.sandbox = ctx.sandboxedCpuProfileModel;
+    this.sandbox.init(events);
+
+    return this;
+  }
+
+  cpuProfile() {
+    return this.sandbox.cpuProfile();
+  }
+}
+
+module.exports = {TracingModelAPI, CpuProfileModelAPI};
