@@ -71,6 +71,10 @@ class TracingModelAPI {
   interactionModel() {
     return this.sandbox.interactionModel();
   }
+
+  getRangeStats(start, end) {
+    return this.sandbox.getRangeStats(start, end);
+  }
 }
 
 class CpuProfileModelAPI {
